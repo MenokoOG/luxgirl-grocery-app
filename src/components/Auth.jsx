@@ -1,38 +1,33 @@
-// src/components/Auth.jsx
 import React, { useState, useEffect } from 'react';
-import { getAuth, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
-import { googleProvider } from '../firebase';
+import { signInWithGoogle, signOutUser, getUserState } from '../api-client/firebaseApi';
 
 function Auth() {
   const [user, setUser] = useState(null);
-  const auth = getAuth();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
+    const unsubscribe = getUserState(setUser);
     return () => unsubscribe();
-  }, [auth]);
+  }, []);
 
   const handleGoogleSignIn = async () => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      setUser(result.user);
+      const user = await signInWithGoogle();
+      setUser(user);
     } catch (error) {
       console.error("Error signing in with Google:", error.message);
     }
   };
 
   const handleSignOut = async () => {
-    await signOut(auth);
+    await signOutUser();
     setUser(null);
   };
 
   return (
-    <div className="flex flex-col items-center bg-white p-6 rounded-lg shadow-lg">
+    <div className="flex flex-col items-center bg-gray-light dark:bg-gray-800 p-6 rounded-lg shadow-lg form-container">
       {!user ? (
         <div className="w-full">
-          <h2 className="text-2xl font-bold mb-4 text-indigo">Sign In</h2>
+          <h2 className="text-2xl font-bold mb-4 text-indigo dark:text-indigo-400">Sign In</h2>
           <button
             onClick={handleGoogleSignIn}
             className="w-full bg-teal text-white p-2 rounded hover:bg-teal-dark transition flex items-center justify-center"
@@ -54,7 +49,7 @@ function Auth() {
         </div>
       ) : (
         <div className="w-full">
-          <h2 className="text-2xl font-bold mb-4 text-indigo">Welcome, {user.displayName}</h2>
+          <h2 className="text-2xl font-bold mb-4 text-indigo dark:text-indigo-400">Welcome, {user.displayName}</h2>
           <button
             onClick={handleSignOut}
             className="w-full bg-red-500 text-white p-2 rounded hover:bg-red-700 transition"
