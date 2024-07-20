@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { fetchGroceryItems, addGroceryItem, updateGroceryItem, deleteGroceryItem } from '../api-client/firebaseApi';
+import { TextField, Button, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Checkbox, Container, Box, Typography, Link as MuiLink } from '@mui/material';
+import { Edit as EditIcon, Delete as DeleteIcon, CheckBox as CheckBoxIcon, CheckBoxOutlineBlank as CheckBoxOutlineBlankIcon } from '@mui/icons-material';
 
 function GroceryList({ user }) {
   const [items, setItems] = useState([]);
@@ -59,93 +61,116 @@ function GroceryList({ user }) {
     setNewWebsiteUrl(item.websiteUrl);
   };
 
+  const handleToggleCompleted = async (id, completed) => {
+    await updateGroceryItem(id, { completed: !completed });
+    const items = await fetchGroceryItems(user.uid);
+    setItems(items);
+  };
+
   const filteredItems = items.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className="bg-gray-light dark:bg-gray-800 p-6 rounded-lg shadow-lg form-container">
-      <div className="flex flex-col mb-4">
-        <input
-          type="text"
+    <Container maxWidth="sm">
+      <Box my={4}>
+        <TextField
+          label="Add new item"
           value={newItem}
           onChange={(e) => setNewItem(e.target.value)}
-          className="mb-2 p-2 border border-gray-dark dark:border-gray-600 rounded focus:outline-none dark:bg-gray-700 dark:text-white"
-          placeholder="Add new item"
+          fullWidth
+          margin="normal"
         />
-        <input
-          type="text"
+        <TextField
+          label="Image URL (optional)"
           value={newImageUrl}
           onChange={(e) => setNewImageUrl(e.target.value)}
-          className="mb-2 p-2 border border-gray-dark dark:border-gray-600 rounded focus:outline-none dark:bg-gray-700 dark:text-white"
-          placeholder="Image URL (optional)"
+          fullWidth
+          margin="normal"
         />
-        <input
-          type="text"
+        <TextField
+          label="Website URL (optional)"
           value={newWebsiteUrl}
           onChange={(e) => setNewWebsiteUrl(e.target.value)}
-          className="mb-2 p-2 border border-gray-dark dark:border-gray-600 rounded focus:outline-none dark:bg-gray-700 dark:text-white"
-          placeholder="Website URL (optional)"
+          fullWidth
+          margin="normal"
         />
         {editItemId ? (
-          <button
+          <Button
+            variant="contained"
+            color="primary"
             onClick={handleUpdateItem}
-            className="bg-amber text-black p-2 rounded hover:bg-amber-dark transition"
+            fullWidth
           >
             Update
-          </button>
+          </Button>
         ) : (
-          <button
+          <Button
+            variant="contained"
+            color="primary"
             onClick={handleAddItem}
-            className="bg-teal hover:bg-teal-dark text-white p-2 rounded transition"
+            fullWidth
           >
             Add
-          </button>
+          </Button>
         )}
-      </div>
-      <input
-        type="text"
+      </Box>
+      <TextField
+        label="Search items"
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        className="mb-4 p-2 border border-gray-dark dark:border-gray-600 rounded focus:outline-none dark:bg-gray-700 dark:text-white"
-        placeholder="Search items"
+        fullWidth
+        margin="normal"
       />
-      <ul>
+      <List>
         {filteredItems.map(item => (
-          <li key={item.id} className={`flex flex-col justify-between items-start bg-gray-light dark:bg-gray-700 p-4 mb-2 rounded-lg shadow-md ${item.completed ? 'opacity-50' : ''} card`}>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                checked={item.completed}
-                onChange={() => updateGroceryItem(item.id, { completed: !item.completed })}
-                className="mr-2"
-              />
-              <span className={`font-bold text-lg text-indigo dark:text-indigo-400 ${item.completed ? 'line-through' : ''}`}>{item.name}</span>
-            </div>
-            {item.imageUrl && <img src={item.imageUrl} alt={item.name} className="w-24 h-24 object-cover mt-2 rounded-md" />}
-            {item.websiteUrl && (
-              <a href={item.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-teal mt-2 hover:text-teal-dark transition">
-                Visit Website
-              </a>
-            )}
-            <div className="flex mt-2 space-x-2">
-              <button
-                onClick={() => handleEdit(item)}
-                className="bg-amber text-black p-2 rounded hover:bg-amber-dark transition"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleRemoveItem(item.id)}
-                className="bg-red-500 hover:bg-red-700 text-white p-2 rounded transition"
-              >
-                Remove
-              </button>
-            </div>
-          </li>
+          <ListItem 
+            key={item.id} 
+            divider 
+            style={{ opacity: item.completed ? 0.5 : 1, textDecoration: item.completed ? 'line-through' : 'none' }}
+          >
+            <Checkbox
+              edge="start"
+              checked={item.completed}
+              onChange={() => handleToggleCompleted(item.id, item.completed)}
+              icon={<CheckBoxOutlineBlankIcon />}
+              checkedIcon={<CheckBoxIcon />}
+            />
+            <ListItemText 
+              primary={
+                <React.Fragment>
+                  <Typography variant="body1">
+                    {item.name}
+                  </Typography>
+                  {item.imageUrl && (
+                    <MuiLink href={item.imageUrl} target="_blank" rel="noopener">
+                      <img 
+                        src={item.imageUrl} 
+                        alt={item.name} 
+                        style={{ width: '100px', height: '100px', objectFit: 'cover', marginTop: '8px' }} 
+                      />
+                    </MuiLink>
+                  )}
+                  {item.websiteUrl && (
+                    <MuiLink href={item.websiteUrl} target="_blank" rel="noopener" variant="body2" style={{ display: 'block', marginTop: '8px' }}>
+                      {item.websiteUrl}
+                    </MuiLink>
+                  )}
+                </React.Fragment>
+              }
+            />
+            <ListItemSecondaryAction>
+              <IconButton edge="end" onClick={() => handleEdit(item)}>
+                <EditIcon />
+              </IconButton>
+              <IconButton edge="end" onClick={() => handleRemoveItem(item.id)}>
+                <DeleteIcon />
+              </IconButton>
+            </ListItemSecondaryAction>
+          </ListItem>
         ))}
-      </ul>
-    </div>
+      </List>
+    </Container>
   );
 }
 
