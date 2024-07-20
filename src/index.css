@@ -1,7 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 /* Additional styling for dark mode */
 body.dark {
   background-color: #1a202c;

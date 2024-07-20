@@ -10,6 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.13.0",
+    "@emotion/styled": "^11.13.0",
+    "@mui/icons-material": "^5.16.4",
+    "@mui/material": "^5.16.4",
     "@tailwindcss/typography": "^0.5.13",
     "autoprefixer": "^10.4.19",
     "dotenv": "^16.4.5",
