@@ -1,7 +1,5 @@
-// src/components/GroceryList.jsx
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
-import { db } from '../firebase';
+import { fetchGroceryItems, addGroceryItem, updateGroceryItem, deleteGroceryItem } from '../api-client/firebaseApi';
 
 function GroceryList({ user }) {
   const [items, setItems] = useState([]);
@@ -13,16 +11,15 @@ function GroceryList({ user }) {
 
   useEffect(() => {
     const fetchItems = async () => {
-      const q = query(collection(db, "grocery-items"), where("userId", "==", user.uid));
-      const querySnapshot = await getDocs(q);
-      setItems(querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })));
+      const items = await fetchGroceryItems(user.uid);
+      setItems(items);
     };
     fetchItems();
   }, [user.uid]);
 
-  const addItem = async () => {
+  const handleAddItem = async () => {
     if (newItem.trim()) {
-      await addDoc(collection(db, "grocery-items"), {
+      await addGroceryItem({
         name: newItem,
         imageUrl: newImageUrl,
         websiteUrl: newWebsiteUrl,
@@ -33,22 +30,25 @@ function GroceryList({ user }) {
       setNewItem('');
       setNewImageUrl('');
       setNewWebsiteUrl('');
-      const q = query(collection(db, "grocery-items"), where("userId", "==", user.uid));
-      const querySnapshot = await getDocs(q);
-      setItems(querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })));
+      const items = await fetchGroceryItems(user.uid);
+      setItems(items);
     }
   };
 
-  const updateItem = async (id, updatedFields) => {
-    const itemDoc = doc(db, "grocery-items", id);
-    await updateDoc(itemDoc, updatedFields);
-    const q = query(collection(db, "grocery-items"), where("userId", "==", user.uid));
-    const querySnapshot = await getDocs(q);
-    setItems(querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })));
+  const handleUpdateItem = async () => {
+    if (editItemId) {
+      await updateGroceryItem(editItemId, { name: newItem, imageUrl: newImageUrl, websiteUrl: newWebsiteUrl });
+      setEditItemId(null);
+      setNewItem('');
+      setNewImageUrl('');
+      setNewWebsiteUrl('');
+      const items = await fetchGroceryItems(user.uid);
+      setItems(items);
+    }
   };
 
-  const removeItem = async (id) => {
-    await deleteDoc(doc(db, "grocery-items", id));
+  const handleRemoveItem = async (id) => {
+    await deleteGroceryItem(id);
     setItems(items.filter(item => item.id !== id));
   };
 
@@ -59,54 +59,44 @@ function GroceryList({ user }) {
     setNewWebsiteUrl(item.websiteUrl);
   };
 
-  const handleUpdate = () => {
-    if (editItemId) {
-      updateItem(editItemId, { name: newItem, imageUrl: newImageUrl, websiteUrl: newWebsiteUrl });
-      setEditItemId(null);
-      setNewItem('');
-      setNewImageUrl('');
-      setNewWebsiteUrl('');
-    }
-  };
-
   const filteredItems = items.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className="bg-gray-light p-6 rounded-lg shadow-lg">
+    <div className="bg-gray-light dark:bg-gray-800 p-6 rounded-lg shadow-lg form-container">
       <div className="flex flex-col mb-4">
         <input
           type="text"
           value={newItem}
           onChange={(e) => setNewItem(e.target.value)}
-          className="mb-2 p-2 border border-gray-dark rounded focus:outline-none"
+          className="mb-2 p-2 border border-gray-dark dark:border-gray-600 rounded focus:outline-none dark:bg-gray-700 dark:text-white"
           placeholder="Add new item"
         />
         <input
           type="text"
           value={newImageUrl}
           onChange={(e) => setNewImageUrl(e.target.value)}
-          className="mb-2 p-2 border border-gray-dark rounded focus:outline-none"
+          className="mb-2 p-2 border border-gray-dark dark:border-gray-600 rounded focus:outline-none dark:bg-gray-700 dark:text-white"
           placeholder="Image URL (optional)"
         />
         <input
           type="text"
           value={newWebsiteUrl}
           onChange={(e) => setNewWebsiteUrl(e.target.value)}
-          className="mb-2 p-2 border border-gray-dark rounded focus:outline-none"
+          className="mb-2 p-2 border border-gray-dark dark:border-gray-600 rounded focus:outline-none dark:bg-gray-700 dark:text-white"
           placeholder="Website URL (optional)"
         />
         {editItemId ? (
           <button
-            onClick={handleUpdate}
+            onClick={handleUpdateItem}
             className="bg-amber text-black p-2 rounded hover:bg-amber-dark transition"
           >
             Update
           </button>
         ) : (
           <button
-            onClick={addItem}
+            onClick={handleAddItem}
             className="bg-teal hover:bg-teal-dark text-white p-2 rounded transition"
           >
             Add
@@ -117,20 +107,20 @@ function GroceryList({ user }) {
         type="text"
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        className="mb-4 p-2 border border-gray-dark rounded focus:outline-none"
+        className="mb-4 p-2 border border-gray-dark dark:border-gray-600 rounded focus:outline-none dark:bg-gray-700 dark:text-white"
         placeholder="Search items"
       />
       <ul>
         {filteredItems.map(item => (
-          <li key={item.id} className={`flex flex-col justify-between items-start bg-gray-light p-4 mb-2 rounded-lg shadow-md ${item.completed ? 'opacity-50' : ''}`}>
+          <li key={item.id} className={`flex flex-col justify-between items-start bg-gray-light dark:bg-gray-700 p-4 mb-2 rounded-lg shadow-md ${item.completed ? 'opacity-50' : ''} card`}>
             <div className="flex items-center">
               <input
                 type="checkbox"
                 checked={item.completed}
-                onChange={() => updateItem(item.id, { completed: !item.completed })}
+                onChange={() => updateGroceryItem(item.id, { completed: !item.completed })}
                 className="mr-2"
               />
-              <span className={`font-bold text-lg text-indigo ${item.completed ? 'line-through' : ''}`}>{item.name}</span>
+              <span className={`font-bold text-lg text-indigo dark:text-indigo-400 ${item.completed ? 'line-through' : ''}`}>{item.name}</span>
             </div>
             {item.imageUrl && <img src={item.imageUrl} alt={item.name} className="w-24 h-24 object-cover mt-2 rounded-md" />}
             {item.websiteUrl && (
@@ -146,7 +136,7 @@ function GroceryList({ user }) {
                 Edit
               </button>
               <button
-                onClick={() => removeItem(item.id)}
+                onClick={() => handleRemoveItem(item.id)}
                 className="bg-red-500 hover:bg-red-700 text-white p-2 rounded transition"
               >
                 Remove
