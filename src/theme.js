@@ -1,5 +1,5 @@
 import { createTheme } from '@mui/material/styles';
-import { grey, teal, amber, indigo, pink, deepPurple } from '@mui/material/colors';
+import { grey, deepPurple, pink } from '@mui/material/colors';
 
 const lightTheme = createTheme({
   palette: {
@@ -17,6 +17,18 @@ const lightTheme = createTheme({
   },
   typography: {
     fontFamily: 'Roboto, Arial, sans-serif',
+    h6: {
+      fontSize: '1.25rem',
+      '@media (min-width:600px)': {
+        fontSize: '1.5rem',
+      },
+    },
+    body1: {
+      fontSize: '1rem',
+      '@media (min-width:600px)': {
+        fontSize: '1.125rem',
+      },
+    },
   },
 });
 
@@ -36,6 +48,18 @@ const darkTheme = createTheme({
   },
   typography: {
     fontFamily: 'Roboto, Arial, sans-serif',
+    h6: {
+      fontSize: '1.25rem',
+      '@media (min-width:600px)': {
+        fontSize: '1.5rem',
+      },
+    },
+    body1: {
+      fontSize: '1rem',
+      '@media (min-width:600px)': {
+        fontSize: '1.125rem',
+      },
+    },
   },
 });
 

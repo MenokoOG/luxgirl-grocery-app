@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { fetchGroceryItems, addGroceryItem, updateGroceryItem, deleteGroceryItem } from '../api-client/firebaseApi';
-import { TextField, Button, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Checkbox, Container, Box, Typography, Link as MuiLink } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon, CheckBox as CheckBoxIcon, CheckBoxOutlineBlank as CheckBoxOutlineBlankIcon } from '@mui/icons-material';
+import { TextField, Button, List, Container, Box } from '@mui/material';
+import GroceryItem from './GroceryItem';
+import SearchBar from './SearchBar';
 
 function GroceryList({ user }) {
   const [items, setItems] = useState([]);
@@ -19,28 +20,26 @@ function GroceryList({ user }) {
     fetchItems();
   }, [user.uid]);
 
-  const handleAddItem = async () => {
-    if (newItem.trim()) {
-      await addGroceryItem({
-        name: newItem,
-        imageUrl: newImageUrl,
-        websiteUrl: newWebsiteUrl,
-        userId: user.uid,
-        createdAt: new Date(),
-        completed: false,
-      });
-      setNewItem('');
-      setNewImageUrl('');
-      setNewWebsiteUrl('');
-      const items = await fetchGroceryItems(user.uid);
-      setItems(items);
-    }
-  };
+  const filteredItems = useMemo(() => 
+    items.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase())),
+    [items, searchQuery]
+  );
 
-  const handleUpdateItem = async () => {
-    if (editItemId) {
-      await updateGroceryItem(editItemId, { name: newItem, imageUrl: newImageUrl, websiteUrl: newWebsiteUrl });
-      setEditItemId(null);
+  const handleAddOrUpdateItem = async () => {
+    if (newItem.trim()) {
+      if (editItemId) {
+        await updateGroceryItem(editItemId, { name: newItem, imageUrl: newImageUrl, websiteUrl: newWebsiteUrl });
+        setEditItemId(null);
+      } else {
+        await addGroceryItem({
+          name: newItem,
+          imageUrl: newImageUrl,
+          websiteUrl: newWebsiteUrl,
+          userId: user.uid,
+          createdAt: new Date(),
+          completed: false,
+        });
+      }
       setNewItem('');
       setNewImageUrl('');
       setNewWebsiteUrl('');
@@ -67,13 +66,9 @@ function GroceryList({ user }) {
     setItems(items);
   };
 
-  const filteredItems = items.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
-    <Container maxWidth="sm">
-      <Box my={4}>
+    <Container maxWidth="sm" className="space-y-4">
+      <Box>
         <TextField
           label="Add new item"
           value={newItem}
@@ -95,79 +90,26 @@ function GroceryList({ user }) {
           fullWidth
           margin="normal"
         />
-        {editItemId ? (
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleUpdateItem}
-            fullWidth
-          >
-            Update
-          </Button>
-        ) : (
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleAddItem}
-            fullWidth
-          >
-            Add
-          </Button>
-        )}
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleAddOrUpdateItem}
+          fullWidth
+          className="mt-2"
+        >
+          {editItemId ? 'Update' : 'Add'}
+        </Button>
       </Box>
-      <TextField
-        label="Search items"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <List>
+      <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+      <List className="space-y-2">
         {filteredItems.map(item => (
-          <ListItem 
+          <GroceryItem 
             key={item.id} 
-            divider 
-            style={{ opacity: item.completed ? 0.5 : 1, textDecoration: item.completed ? 'line-through' : 'none' }}
-          >
-            <Checkbox
-              edge="start"
-              checked={item.completed}
-              onChange={() => handleToggleCompleted(item.id, item.completed)}
-              icon={<CheckBoxOutlineBlankIcon />}
-              checkedIcon={<CheckBoxIcon />}
-            />
-            <ListItemText 
-              primary={
-                <React.Fragment>
-                  <Typography variant="body1">
-                    {item.name}
-                  </Typography>
-                  {item.imageUrl && (
-                    <MuiLink href={item.imageUrl} target="_blank" rel="noopener">
-                      <img 
-                        src={item.imageUrl} 
-                        alt={item.name} 
-                        style={{ width: '100px', height: '100px', objectFit: 'cover', marginTop: '8px' }} 
-                      />
-                    </MuiLink>
-                  )}
-                  {item.websiteUrl && (
-                    <MuiLink href={item.websiteUrl} target="_blank" rel="noopener" variant="body2" style={{ display: 'block', marginTop: '8px' }}>
-                      {item.websiteUrl}
-                    </MuiLink>
-                  )}
-                </React.Fragment>
-              }
-            />
-            <ListItemSecondaryAction>
-              <IconButton edge="end" onClick={() => handleEdit(item)}>
-                <EditIcon />
-              </IconButton>
-              <IconButton edge="end" onClick={() => handleRemoveItem(item.id)}>
-                <DeleteIcon />
-              </IconButton>
-            </ListItemSecondaryAction>
-          </ListItem>
+            item={item}
+            onEdit={() => handleEdit(item)}
+            onRemove={() => handleRemoveItem(item.id)}
+            onToggleCompleted={() => handleToggleCompleted(item.id, item.completed)}
+          />
         ))}
       </List>
     </Container>

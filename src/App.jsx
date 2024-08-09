@@ -18,21 +18,21 @@ function App() {
   return (
     <ThemeProvider theme={isDarkTheme ? darkTheme : lightTheme}>
       <CssBaseline />
-      <Box className="min-h-screen" bgcolor={isDarkTheme ? 'background.default' : 'background.default'} color={isDarkTheme ? 'text.primary' : 'text.primary'}>
-        <AppBar position="static">
-          <Toolbar>
-            <Box flexGrow={1} textAlign="center">
-              <Typography variant="h6">
+      <Box className="min-h-screen flex flex-col items-center justify-center">
+        <AppBar position="static" className="w-full">
+          <Toolbar className="flex justify-center">
+            <Box className="flex justify-between items-center w-full max-w-xs">
+              <Typography variant="h6" className="text-center">
                 Grocery and Shopping List App
               </Typography>
+              <Button color="inherit" onClick={toggleTheme} className="ml-4">
+                Toggle Theme
+              </Button>
             </Box>
-            <Button color="inherit" onClick={toggleTheme}>
-              Toggle Theme
-            </Button>
           </Toolbar>
         </AppBar>
-        <Container>
-          <Box my={4}>
+        <Container className="flex-grow flex flex-col items-center justify-center">
+          <Box my={4} className="w-full">
             <Auth />
           </Box>
           {user ? (
