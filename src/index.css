@@ -1,28 +1,212 @@
-/* Additional styling for dark mode */
-body.dark {
-  background-color: #1a202c;
-  color: #cbd5e0;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ----------------------------------------------------------
+   Theme tokens and styles
+   - Use html.dark or html.light to select palette
+   - Use .large-mode, .high-contrast, .reduced-motion for accessibility
+   ----------------------------------------------------------*/
+
+/* Base variables (semantic names) */
+:root {
+  --crimson: #9b1b30;
+  --crimson-light: #c43b4b;
+  --obsidian: #0b0e13;
+  --obsidian-2: #07121a;
+  --panel: #07121a;
+  --muted: #0f1720;
+  --text: #e6eef6;
+  --muted-text: #9aa6b2;
+  --focus: rgba(196, 59, 75, 0.18);
+  --surface-elev-1: rgba(255, 255, 255, 0.02);
+  --link: var(--crimson-light);
 }
 
-body.light {
-  background-color: #f7fafc;
-  color: #2d3748;
+/* Dark mode (default) */
+html.dark {
+  --bg: linear-gradient(180deg, var(--obsidian), var(--obsidian-2));
+  --page-bg: #071018;
+  --panel-bg: #07121a;
+  --text: #e6eef6;
+  --muted-text: #9aa6b2;
+  --border: #132029;
+  --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --link: var(--crimson-light);
 }
 
-input, .card, .form-container {
-  background-color: #ffffff;
-  color: #000000;
+/* Light mode palette (harmonized crimson brand) */
+html.light {
+  --bg: linear-gradient(180deg, #f5f7fa, #eef2f6);
+  --page-bg: #f8fafc;
+  --panel-bg: #ffffff;
+  --text: #0b1720;
+  --muted-text: #4b5563;
+  --border: #e6eef6;
+  --card-shadow: 0 8px 20px rgba(16, 24, 40, 0.06);
+  --link: #b8323b; /* warm crimson */
 }
 
-body.dark input, body.dark .card, body.dark .form-container {
-  background-color: #2d3748;
-  color: #cbd5e0;
+/* Global page */
+html,
+body,
+#root {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-input::placeholder {
-  color: #a0aec0;
+/* Large mode increases base font-size and spacing */
+.large-mode body {
+  font-size: 19px;
+  line-height: 1.5;
 }
 
-body.dark input::placeholder {
-  color: #718096;
+/* High contrast adjustments */
+.high-contrast {
+  --text: #ffffff;
+  --panel-bg: #000000;
+  --border: #ffffff;
+  --link: #ffffff;
+  background: #000000 !important;
+}
+
+/* Reduced motion: prefer system preference as well */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+.reduced-motion * {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* Common UI tokens used across components */
+.button-crimson {
+  background-color: var(--crimson);
+  color: white;
+  padding: 0.45rem 0.8rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+.input-dark {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.45rem;
+  border-radius: 0.375rem;
+}
+
+/* Card styles adapted to theme */
+.card {
+  background-color: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  box-shadow: var(--card-shadow);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.card:hover {
+  transform: translateY(-4px);
+}
+
+/* Accessibility-friendly focus */
+:focus {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Text utility overrides for consistent contrast */
+.text-muted {
+  color: var(--muted-text);
+}
+
+/* Ensure interactive controls are touch-friendly in large mode */
+.large-mode .button-crimson,
+.large-mode .input-dark,
+.large-mode button {
+  padding: 0.9rem 1rem;
+  min-height: 48px;
+  font-size: 1.03rem;
+}
+
+/* Print layout: show only print-area */
+@media print {
+  body * {
+    visibility: hidden;
+    display: none !important;
+  }
+  #print-area,
+  #print-area * {
+    visibility: visible;
+    display: block !important;
+  }
+  #print-area {
+    position: static;
+    width: 100%;
+    background: #ffffff;
+    color: #000000;
+    padding: 1rem;
+  }
+  #print-area .card {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 0.9em;
+    color: #222;
+  }
+  * {
+    background: transparent !important;
+    color: #000 !important;
+  }
+}
+
+/* Small-screen adjustments */
+@media (max-width: 420px) {
+  .card {
+    padding: 0.6rem;
+  }
+  .button-crimson {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* Accessibility: visually-hidden helper */
+.sr-only {
+  position: absolute !important;
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px);
+  white-space: nowrap;
+}
+
+/* Helpers to maintain consistent brand color across both themes */
+.text-crimson {
+  color: var(--crimson);
+}
+.bg-crimson {
+  background-color: var(--crimson);
+  color: #fff;
+}
+
+/* small tweak for the header brand element */
+header .w-10 {
+  background: linear-gradient(180deg, var(--obsidian), var(--obsidian-2));
 }

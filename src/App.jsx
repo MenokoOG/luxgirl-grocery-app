@@ -1,51 +1,54 @@
-import React, { useState, useEffect } from 'react';
-import { ThemeProvider, CssBaseline, Container, AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
-import GroceryList from './components/GroceryList';
+import React, { useState } from 'react';
+import Header from './components/Header';
 import Auth from './components/Auth';
-import { getUserState } from './api-client/firebaseApi';
+import GroceryList from './components/GroceryList';
+import Inbox from './components/Inbox';
+import MigrationTool from './components/MigrationTool';
+import { onUserStateChanged } from './api-client/firebaseApi';
 import { useTheme } from './context/ThemeContext';
-import { lightTheme, darkTheme } from './theme';
 
-function App() {
+export default function App() {
   const [user, setUser] = useState(null);
-  const { isDarkTheme, toggleTheme } = useTheme();
+  const { isDark, toggle } = useTheme();
 
-  useEffect(() => {
-    const unsubscribe = getUserState(setUser);
-    return () => unsubscribe();
+  React.useEffect(() => {
+    const unsub = onUserStateChanged(u => setUser(u));
+    return () => unsub();
   }, []);
 
   return (
-    <ThemeProvider theme={isDarkTheme ? darkTheme : lightTheme}>
-      <CssBaseline />
-      <Box className="min-h-screen" bgcolor={isDarkTheme ? 'background.default' : 'background.default'} color={isDarkTheme ? 'text.primary' : 'text.primary'}>
-        <AppBar position="static">
-          <Toolbar>
-            <Box flexGrow={1} textAlign="center">
-              <Typography variant="h6">
-                Grocery and Shopping List App
-              </Typography>
-            </Box>
-            <Button color="inherit" onClick={toggleTheme}>
-              Toggle Theme
-            </Button>
-          </Toolbar>
-        </AppBar>
-        <Container>
-          <Box my={4}>
-            <Auth />
-          </Box>
+    <div className="min-h-screen p-4 sm:p-6 max-w-4xl mx-auto">
+      <Header />
+
+      <div className="flex justify-end mb-4">
+        <button
+          className="px-3 py-1 bg-gray-700 rounded"
+          onClick={toggle}
+          aria-pressed={isDark}
+          aria-label="Toggle color theme"
+          title="Toggle theme"
+        >
+          {isDark ? 'Switch to Light' : 'Switch to Dark'}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <main className="md:col-span-2 space-y-4">
+          <Auth />
           {user ? (
-            <GroceryList user={user} />
+            <>
+              <GroceryList user={user} />
+              <MigrationTool user={user} />
+            </>
           ) : (
-            <Typography variant="body1" align="center">
-              Please sign in to manage your grocery list.
-            </Typography>
+            <div className="card">Sign in to manage your grocery list, share items, and check Inbox.</div>
           )}
-        </Container>
-      </Box>
-    </ThemeProvider>
+        </main>
+
+        <aside>
+          {user ? <Inbox user={user} /> : <div className="card">Inbox requires sign-in</div>}
+        </aside>
+      </div>
+    </div>
   );
 }
-
-export default App;

@@ -32,13 +32,11 @@ Follow these steps to set up and run the application locally.
    git clone <repository-url>
    cd <repository-directory>
    ```
-
 2. Install dependencies:
 
    ```bash
    npm install
    ```
-
 3. Set up Firebase:
 
    - Create a `.env` file in the root directory with your Firebase configuration:
@@ -59,7 +57,6 @@ Follow these steps to set up and run the application locally.
    ```bash
    npm run dev
    ```
-
 2. Open your browser and navigate to `http://localhost:3000`.
 
 ## Firebase Configuration
@@ -515,7 +512,7 @@ function App() {
       </div>
       {user ? (
         <GroceryList user={user} />
-     
+   
 
  ) : (
         <p className="text-center">
@@ -565,4 +562,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 
 ---
-
