@@ -1,28 +1,254 @@
-/* Additional styling for dark mode */
-body.dark {
-  background-color: #1a202c;
-  color: #cbd5e0;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Core variables - themed via theme classes on <html> */
+:root {
+  --panel: #07121a;
+  --muted: #0f1720;
+  --text: #e6eef6;
+  --bg-grad-top: #0b0e13;
+  --bg-grad-bottom: #071018;
+  --accent: #9b1b30; /* default crimson */
+  --accent-light: #c43b4b;
+  --secondary: #0ea5ff; /* azure fallback */
+  --focus: rgba(196, 59, 75, 0.18);
+  --muted-bg: rgba(255, 255, 255, 0.02);
+  --danger: #dc2626;
+  --success: #16a34a;
+  --gray-600: rgba(255, 255, 255, 0.06);
 }
 
-body.light {
-  background-color: #f7fafc;
-  color: #2d3748;
+/* Theme: Crimson (default) */
+html.theme-crimson {
+  --accent: #9b1b30;
+  --accent-light: #c43b4b;
+  --secondary: #00a3d9;
+  --focus: rgba(196, 59, 75, 0.18);
+  --bg-grad-top: #0b0e13;
+  --bg-grad-bottom: #071018;
+  --panel: #07121a;
+  --text: #e6eef6;
+  --danger: #b91c1c;
+  --success: #16a34a;
 }
 
-input, .card, .form-container {
-  background-color: #ffffff;
-  color: #000000;
+/* Theme: Azure (blue accent) */
+html.theme-azure {
+  --accent: #0ea5ff;
+  --accent-light: #66d9ff;
+  --secondary: #9b1b30;
+  --focus: rgba(14, 165, 255, 0.18);
+  --bg-grad-top: #071221;
+  --bg-grad-bottom: #031018;
+  --panel: #061422;
+  --text: #e9f6ff;
+  --danger: #ef4444;
+  --success: #10b981;
 }
 
-body.dark input, body.dark .card, body.dark .form-container {
-  background-color: #2d3748;
-  color: #cbd5e0;
+/* General page */
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  background: linear-gradient(
+    180deg,
+    var(--bg-grad-top),
+    var(--bg-grad-bottom)
+  );
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-input::placeholder {
-  color: #a0aec0;
+/* LARGE MODE adjustments */
+.large-mode body {
+  font-size: 20px;
+}
+.large-mode .card {
+  padding: 1.25rem;
+}
+.large-mode .btn {
+  padding: 0.9rem 1.2rem;
+  font-size: 1.05rem;
+  border-radius: 0.5rem;
+}
+.large-mode .input-dark {
+  padding: 0.9rem;
+  font-size: 1.03rem;
+  min-height: 52px;
 }
 
-body.dark input::placeholder {
-  color: #718096;
+/* Respect reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+.reduced-motion * {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* card and tiny tokens */
+.card {
+  background-color: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+.input-dark {
+  background: var(--muted-bg);
+  border: 1px solid var(--gray-600);
+  color: var(--text);
+  padding: 0.45rem;
+  border-radius: 0.375rem;
+}
+
+/* semantic button primitives (use these instead of hardcoded bg- classes) */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
+  user-select: none;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+/* Accent (primary) - uses --accent */
+.btn-primary {
+  background: linear-gradient(90deg, var(--accent-light), var(--accent));
+  color: white;
+  border-color: rgba(255, 255, 255, 0.04);
+}
+.btn-primary:focus {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45), 0 0 0 4px var(--focus);
+}
+
+/* Secondary / calmer actions (muted styling) */
+.btn-secondary {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.02),
+    rgba(255, 255, 255, 0.01)
+  );
+  color: var(--text);
+  border-color: var(--gray-600);
+}
+.btn-secondary[aria-pressed="true"] {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Danger */
+.btn-danger {
+  background: linear-gradient(90deg, rgba(255, 85, 85, 0.95), var(--danger));
+  color: white;
+}
+
+/* Success */
+.btn-success {
+  background: linear-gradient(90deg, rgba(34, 197, 94, 0.95), var(--success));
+  color: white;
+}
+
+/* Muted small */
+.btn-muted {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 0.35rem 0.6rem;
+  font-weight: 500;
+}
+
+/* polished interactions */
+.card {
+  transition: transform 160ms ease, box-shadow 160ms ease,
+    border-color 160ms ease;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.04);
+}
+
+/* focus */
+.input-dark:focus,
+.btn:focus {
+  outline: none;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), 0 0 0 4px var(--focus);
+}
+
+/* logo float animation using CSS variables for subtlety */
+@keyframes float {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+.logo-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Print rules: show only #print-area */
+@media print {
+  body * {
+    visibility: hidden;
+    display: none !important;
+  }
+  #print-area,
+  #print-area * {
+    visibility: visible;
+    display: block !important;
+    color: #000 !important;
+    background: #fff !important;
+  }
+  #print-area {
+    width: 100%;
+    padding: 1rem;
+  }
+  #print-area .card {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 0.9em;
+    color: #222;
+  }
+}
+
+/* small screens */
+@media (max-width: 420px) {
+  .logo-float {
+    width: 44px;
+    height: 44px;
+  }
+  .text-2xl {
+    font-size: 1.25rem;
+  }
 }
