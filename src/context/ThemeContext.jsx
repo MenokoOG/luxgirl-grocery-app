@@ -4,47 +4,82 @@ const ThemeContext = createContext();
 
 /**
  * ThemeProvider
+ * - variant: 'crimson' | 'azure'
+ * - toggleVariant() cycles between crimson <-> azure
+ * - setVariant(v) sets explicit variant
+ * - isDark is always true (app runs in dark theme only)
  *
- * Responsibilities:
- * - persist theme choice in localStorage key 'lux_list_theme'
- * - default to system preference when no choice present
- * - toggle between dark and light by setting 'dark' class or 'light-mode' on <html>
+ * Persisted keys:
+ * - lux_list_theme_variant
+ * - lux_list_large_mode (optional UI accessibility flag)
+ * - lux_list_reduced_motion
  */
 export function ThemeProvider({ children }) {
-  const [isDark, setIsDark] = useState(() => {
+  const initialVariant = (() => {
     try {
-      const stored = localStorage.getItem('lux_list_theme');
-      if (stored === 'dark') return true;
-      if (stored === 'light') return false;
-      // fallback to system preference
-      return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      return localStorage.getItem('lux_list_theme_variant') || 'crimson';
     } catch (e) {
-      return true;
+      return 'crimson';
     }
+  })();
+
+  const [variant, setVariantState] = useState(initialVariant); // 'crimson' | 'azure'
+  const isDark = true;
+
+  // Accessibility toggles persisted too
+  const [largeMode, setLargeModeState] = useState(() => {
+    try { return localStorage.getItem('lux_list_large_mode') === '1'; } catch { return false; }
+  });
+  const [reducedMotion, setReducedMotionState] = useState(() => {
+    try { return localStorage.getItem('lux_list_reduced_motion') === '1'; } catch { return false; }
   });
 
   useEffect(() => {
-    const html = document.documentElement;
-    if (isDark) {
-      html.classList.add('dark');
-      html.classList.remove('light-mode');
-      localStorage.setItem('lux_list_theme', 'dark');
-    } else {
-      html.classList.remove('dark');
-      html.classList.add('light-mode');
-      localStorage.setItem('lux_list_theme', 'light');
-    }
-  }, [isDark]);
+    // ensure dark mode class always present
+    document.documentElement.classList.add('dark');
+    // set theme variant class
+    document.documentElement.classList.remove('theme-crimson', 'theme-azure');
+    document.documentElement.classList.add(`theme-${variant}`);
 
-  // expose helpers for more explicit control if parent wants them
-  const value = {
-    isDark,
-    toggle: () => setIsDark(v => !v),
-    setDark: () => setIsDark(true),
-    setLight: () => setIsDark(false)
-  };
+    try { localStorage.setItem('lux_list_theme_variant', variant); } catch (e) { }
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  }, [variant]);
+
+  useEffect(() => {
+    if (largeMode) document.documentElement.classList.add('large-mode');
+    else document.documentElement.classList.remove('large-mode');
+    try { localStorage.setItem('lux_list_large_mode', largeMode ? '1' : '0'); } catch (e) { }
+  }, [largeMode]);
+
+  useEffect(() => {
+    if (reducedMotion) document.documentElement.classList.add('reduced-motion');
+    else document.documentElement.classList.remove('reduced-motion');
+    try { localStorage.setItem('lux_list_reduced_motion', reducedMotion ? '1' : '0'); } catch (e) { }
+  }, [reducedMotion]);
+
+  function setVariant(v) {
+    if (v !== 'crimson' && v !== 'azure') return;
+    setVariantState(v);
+  }
+
+  function toggleVariant() {
+    setVariantState(prev => (prev === 'crimson' ? 'azure' : 'crimson'));
+  }
+
+  return (
+    <ThemeContext.Provider value={{
+      isDark,
+      variant,
+      setVariant,
+      toggleVariant,
+      largeMode,
+      setLargeMode: setLargeModeState,
+      reducedMotion,
+      setReducedMotion: setReducedMotionState
+    }}>
+      {children}
+    </ThemeContext.Provider>
+  );
 }
 
 export function useTheme() {

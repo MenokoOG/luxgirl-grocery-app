@@ -2,57 +2,63 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ----------------------------------------------------------
-   Theme tokens and styles
-   - Use html.dark or html.light to select palette
-   - Use .large-mode, .high-contrast, .reduced-motion for accessibility
-   ----------------------------------------------------------*/
-
-/* Base variables (semantic names) */
+/* Core variables - themed via theme classes on <html> */
 :root {
-  --crimson: #9b1b30;
-  --crimson-light: #c43b4b;
-  --obsidian: #0b0e13;
-  --obsidian-2: #07121a;
   --panel: #07121a;
   --muted: #0f1720;
   --text: #e6eef6;
-  --muted-text: #9aa6b2;
+  --bg-grad-top: #0b0e13;
+  --bg-grad-bottom: #071018;
+  --accent: #9b1b30; /* default crimson */
+  --accent-light: #c43b4b;
+  --secondary: #0ea5ff; /* azure fallback */
   --focus: rgba(196, 59, 75, 0.18);
-  --surface-elev-1: rgba(255, 255, 255, 0.02);
-  --link: var(--crimson-light);
+  --muted-bg: rgba(255, 255, 255, 0.02);
+  --danger: #dc2626;
+  --success: #16a34a;
+  --gray-600: rgba(255, 255, 255, 0.06);
 }
 
-/* Dark mode (default) */
-html.dark {
-  --bg: linear-gradient(180deg, var(--obsidian), var(--obsidian-2));
-  --page-bg: #071018;
-  --panel-bg: #07121a;
+/* Theme: Crimson (default) */
+html.theme-crimson {
+  --accent: #9b1b30;
+  --accent-light: #c43b4b;
+  --secondary: #00a3d9;
+  --focus: rgba(196, 59, 75, 0.18);
+  --bg-grad-top: #0b0e13;
+  --bg-grad-bottom: #071018;
+  --panel: #07121a;
   --text: #e6eef6;
-  --muted-text: #9aa6b2;
-  --border: #132029;
-  --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
-  --link: var(--crimson-light);
+  --danger: #b91c1c;
+  --success: #16a34a;
 }
 
-/* Light mode palette (harmonized crimson brand) */
-html.light {
-  --bg: linear-gradient(180deg, #f5f7fa, #eef2f6);
-  --page-bg: #f8fafc;
-  --panel-bg: #ffffff;
-  --text: #0b1720;
-  --muted-text: #4b5563;
-  --border: #e6eef6;
-  --card-shadow: 0 8px 20px rgba(16, 24, 40, 0.06);
-  --link: #b8323b; /* warm crimson */
+/* Theme: Azure (blue accent) */
+html.theme-azure {
+  --accent: #0ea5ff;
+  --accent-light: #66d9ff;
+  --secondary: #9b1b30;
+  --focus: rgba(14, 165, 255, 0.18);
+  --bg-grad-top: #071221;
+  --bg-grad-bottom: #031018;
+  --panel: #061422;
+  --text: #e9f6ff;
+  --danger: #ef4444;
+  --success: #10b981;
 }
 
-/* Global page */
+/* General page */
 html,
 body,
 #root {
   height: 100%;
-  background: var(--bg);
+}
+body {
+  background: linear-gradient(
+    180deg,
+    var(--bg-grad-top),
+    var(--bg-grad-bottom)
+  );
   color: var(--text);
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial;
@@ -61,28 +67,29 @@ body,
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Large mode increases base font-size and spacing */
+/* LARGE MODE adjustments */
 .large-mode body {
-  font-size: 19px;
-  line-height: 1.5;
+  font-size: 20px;
+}
+.large-mode .card {
+  padding: 1.25rem;
+}
+.large-mode .btn {
+  padding: 0.9rem 1.2rem;
+  font-size: 1.05rem;
+  border-radius: 0.5rem;
+}
+.large-mode .input-dark {
+  padding: 0.9rem;
+  font-size: 1.03rem;
+  min-height: 52px;
 }
 
-/* High contrast adjustments */
-.high-contrast {
-  --text: #ffffff;
-  --panel-bg: #000000;
-  --border: #ffffff;
-  --link: #ffffff;
-  background: #000000 !important;
-}
-
-/* Reduced motion: prefer system preference as well */
+/* Respect reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
   }
 }
 .reduced-motion * {
@@ -91,57 +98,121 @@ body,
   scroll-behavior: auto !important;
 }
 
-/* Common UI tokens used across components */
-.button-crimson {
-  background-color: var(--crimson);
-  color: white;
-  padding: 0.45rem 0.8rem;
-  border-radius: 0.375rem;
-  font-weight: 600;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+/* card and tiny tokens */
+.card {
+  background-color: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
 }
 .input-dark {
-  background: var(--panel-bg);
-  border: 1px solid var(--border);
+  background: var(--muted-bg);
+  border: 1px solid var(--gray-600);
   color: var(--text);
   padding: 0.45rem;
   border-radius: 0.375rem;
 }
 
-/* Card styles adapted to theme */
+/* semantic button primitives (use these instead of hardcoded bg- classes) */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
+  user-select: none;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+/* Accent (primary) - uses --accent */
+.btn-primary {
+  background: linear-gradient(90deg, var(--accent-light), var(--accent));
+  color: white;
+  border-color: rgba(255, 255, 255, 0.04);
+}
+.btn-primary:focus {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45), 0 0 0 4px var(--focus);
+}
+
+/* Secondary / calmer actions (muted styling) */
+.btn-secondary {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.02),
+    rgba(255, 255, 255, 0.01)
+  );
+  color: var(--text);
+  border-color: var(--gray-600);
+}
+.btn-secondary[aria-pressed="true"] {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Danger */
+.btn-danger {
+  background: linear-gradient(90deg, rgba(255, 85, 85, 0.95), var(--danger));
+  color: white;
+}
+
+/* Success */
+.btn-success {
+  background: linear-gradient(90deg, rgba(34, 197, 94, 0.95), var(--success));
+  color: white;
+}
+
+/* Muted small */
+.btn-muted {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 0.35rem 0.6rem;
+  font-weight: 500;
+}
+
+/* polished interactions */
 .card {
-  background-color: var(--panel-bg);
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  padding: 0.75rem;
-  box-shadow: var(--card-shadow);
-  transition: transform 160ms ease, box-shadow 160ms ease;
+  transition: transform 160ms ease, box-shadow 160ms ease,
+    border-color 160ms ease;
 }
 .card:hover {
   transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.04);
 }
 
-/* Accessibility-friendly focus */
-:focus {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
+/* focus */
+.input-dark:focus,
+.btn:focus {
+  outline: none;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), 0 0 0 4px var(--focus);
 }
 
-/* Text utility overrides for consistent contrast */
-.text-muted {
-  color: var(--muted-text);
+/* logo float animation using CSS variables for subtlety */
+@keyframes float {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+.logo-float {
+  animation: float 4s ease-in-out infinite;
 }
 
-/* Ensure interactive controls are touch-friendly in large mode */
-.large-mode .button-crimson,
-.large-mode .input-dark,
-.large-mode button {
-  padding: 0.9rem 1rem;
-  min-height: 48px;
-  font-size: 1.03rem;
-}
-
-/* Print layout: show only print-area */
+/* Print rules: show only #print-area */
 @media print {
   body * {
     visibility: hidden;
@@ -151,12 +222,11 @@ body,
   #print-area * {
     visibility: visible;
     display: block !important;
+    color: #000 !important;
+    background: #fff !important;
   }
   #print-area {
-    position: static;
     width: 100%;
-    background: #ffffff;
-    color: #000000;
     padding: 1rem;
   }
   #print-area .card {
@@ -170,43 +240,15 @@ body,
     font-size: 0.9em;
     color: #222;
   }
-  * {
-    background: transparent !important;
-    color: #000 !important;
-  }
 }
 
-/* Small-screen adjustments */
+/* small screens */
 @media (max-width: 420px) {
-  .card {
-    padding: 0.6rem;
+  .logo-float {
+    width: 44px;
+    height: 44px;
   }
-  .button-crimson {
-    padding: 0.6rem 0.8rem;
-    font-size: 0.95rem;
+  .text-2xl {
+    font-size: 1.25rem;
   }
-}
-
-/* Accessibility: visually-hidden helper */
-.sr-only {
-  position: absolute !important;
-  height: 1px;
-  width: 1px;
-  overflow: hidden;
-  clip: rect(1px, 1px, 1px, 1px);
-  white-space: nowrap;
-}
-
-/* Helpers to maintain consistent brand color across both themes */
-.text-crimson {
-  color: var(--crimson);
-}
-.bg-crimson {
-  background-color: var(--crimson);
-  color: #fff;
-}
-
-/* small tweak for the header brand element */
-header .w-10 {
-  background: linear-gradient(180deg, var(--obsidian), var(--obsidian-2));
 }

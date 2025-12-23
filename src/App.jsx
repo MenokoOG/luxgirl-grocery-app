@@ -9,7 +9,7 @@ import { useTheme } from './context/ThemeContext';
 
 export default function App() {
   const [user, setUser] = useState(null);
-  const { isDark, toggle } = useTheme();
+  const { variant, toggleVariant } = useTheme(); // use correct names from ThemeContext
 
   React.useEffect(() => {
     const unsub = onUserStateChanged(u => setUser(u));
@@ -20,15 +20,15 @@ export default function App() {
     <div className="min-h-screen p-4 sm:p-6 max-w-4xl mx-auto">
       <Header />
 
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end mb-4 gap-3 items-center">
+        <div className="text-sm text-gray-400">Theme: <span style={{ color: 'var(--accent)', fontWeight: 700 }}>{variant}</span></div>
         <button
-          className="px-3 py-1 bg-gray-700 rounded"
-          onClick={toggle}
-          aria-pressed={isDark}
-          aria-label="Toggle color theme"
-          title="Toggle theme"
+          className="btn btn-secondary"
+          onClick={toggleVariant}
+          aria-label="Toggle color variant"
+          title="Toggle crimson / azure"
         >
-          {isDark ? 'Switch to Light' : 'Switch to Dark'}
+          Toggle Variant
         </button>
       </div>
 

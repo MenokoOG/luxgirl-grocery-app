@@ -5,11 +5,10 @@ import UserPicker from './UserPicker';
 import SharePanel from './SharePanel';
 
 /**
- * GroceryList updated:
- * - top-level UserPicker to pick recipient for sharing
- * - per-item inline edit
- * - per-item Send uses selected recipient (or instructs to pick one)
- * - "Send whole list" sends each item to selected recipient
+ * Full replacement GroceryList.jsx
+ * - buttons use semantic .btn-* classes defined in index.css
+ * - inline edit is preserved (edit input appears inline)
+ * - top-level UserPicker as recipient selector
  */
 
 export default function GroceryList({ user }) {
@@ -27,6 +26,8 @@ export default function GroceryList({ user }) {
     try {
       const it = await fetchGroceryItems(user.uid);
       setItems(it);
+    } catch (e) {
+      console.error('load items error', e);
     } finally {
       setLoading(false);
     }
@@ -48,11 +49,11 @@ export default function GroceryList({ user }) {
     }
   };
 
-  // Inline edit handlers
+  /* Inline edit handlers */
   const startEdit = (item) => {
     setEditingId(item.id);
     setEditingName(item.name);
-    // keep focus in place (caller can focus the input if desired)
+    // optional: focus management can be added by ref if needed
   };
 
   const saveEdit = async (id) => {
@@ -64,6 +65,7 @@ export default function GroceryList({ user }) {
       await load();
     } catch (e) {
       console.error('saveEdit error', e);
+      alert('Failed to save edit — see console.');
     }
   };
 
@@ -78,31 +80,24 @@ export default function GroceryList({ user }) {
       setItems(prev => prev.filter(i => i.id !== id));
     } catch (e) {
       console.error('remove error', e);
+      alert('Failed to remove item. See console.');
     }
   };
 
-  // per-item send (uses selectedRecipient)
+  /* Sharing utilities */
   const sendItemToRecipient = async (item) => {
-    if (!user || !user.uid) {
-      console.warn('sendItemToRecipient: missing user');
-      return;
-    }
-    if (!selectedRecipient || !selectedRecipient.uid) {
-      alert('Select a recipient first (use the Find user control above).');
-      return;
-    }
+    if (!user || !user.uid) { alert('Sign in first'); return; }
+    if (!selectedRecipient || !selectedRecipient.uid) { alert('Select a recipient first'); return; }
     try {
       await sendItemMessage({ fromUid: user.uid, toUid: selectedRecipient.uid, item });
-      // optional: show small ack
       console.debug('Sent item', item.id, 'to', selectedRecipient.uid);
-      // no immediate UI change required
+      // optional: visual ack (toast) could be added here
     } catch (e) {
       console.error('sendItemToRecipient error', e);
       alert('Failed to send item. See console.');
     }
   };
 
-  // send full list
   const sendWholeList = async () => {
     if (!user || !user.uid) { alert('Sign in first'); return; }
     if (!selectedRecipient || !selectedRecipient.uid) { alert('Select a recipient first.'); return; }
@@ -122,7 +117,6 @@ export default function GroceryList({ user }) {
     }
   };
 
-  // checkbox selection for multi-send (optional)
   const toggleSelect = (id) => {
     setSelectedForSend(prev => {
       const n = new Set(prev);
@@ -160,7 +154,7 @@ export default function GroceryList({ user }) {
                 placeholder="Add item (top)"
                 aria-label="Add new item"
               />
-              <button className="button-crimson" onClick={addOrUpdateTop} aria-label="Add item">Add</button>
+              <button className="btn btn-primary" onClick={addOrUpdateTop} aria-label="Add item">Add</button>
             </div>
 
             <div className="mt-3">
@@ -181,9 +175,9 @@ export default function GroceryList({ user }) {
                     <div className="text-xs text-gray-400">{selectedRecipient.email}</div>
                   </div>
                   <div className="ml-4 flex flex-col gap-2">
-                    <button className="px-3 py-1 bg-indigo-700 rounded" onClick={() => sendWholeList()}>Send whole list</button>
-                    <button className="px-3 py-1 bg-gray-700 rounded" onClick={() => { setSelectedRecipient(null); }}>Clear</button>
-                    <button className="px-3 py-1 bg-indigo-700 rounded" onClick={() => sendSelected()}>Send selected</button>
+                    <button className="btn btn-primary" onClick={() => sendWholeList()}>Send whole list</button>
+                    <button className="btn btn-secondary" onClick={() => { setSelectedRecipient(null); }}>Clear</button>
+                    <button className="btn btn-primary" onClick={() => sendSelected()}>Send selected</button>
                   </div>
                 </>
               ) : (
@@ -208,8 +202,8 @@ export default function GroceryList({ user }) {
                   {isEditing ? (
                     <div className="flex gap-2 items-center">
                       <input value={editingName} onChange={e => setEditingName(e.target.value)} className="input-dark flex-1" aria-label="Edit item name" />
-                      <button className="px-2 py-1 bg-green-600 rounded" onClick={() => saveEdit(item.id)}>Save</button>
-                      <button className="px-2 py-1 bg-gray-600 rounded" onClick={cancelEdit}>Cancel</button>
+                      <button className="btn btn-success" onClick={() => saveEdit(item.id)}>Save</button>
+                      <button className="btn btn-muted" onClick={cancelEdit}>Cancel</button>
                     </div>
                   ) : (
                     <>
@@ -225,10 +219,19 @@ export default function GroceryList({ user }) {
 
                 {/* Inline edit button (when not editing) */}
                 {!isEditing && (
-                  <button className="px-2 py-1 bg-gray-700 rounded" onClick={() => startEdit(item)} aria-label={`Edit ${item.name}`}>Edit</button>
+                  <button className="btn btn-secondary" onClick={() => startEdit(item)} aria-label={`Edit ${item.name}`}>Edit</button>
                 )}
 
-                <button className="px-2 py-1 bg-red-700 rounded text-white" onClick={() => remove(item.id)} aria-label={`Remove ${item.name}`}>Remove</button>
+                <button className="btn btn-danger" onClick={() => remove(item.id)} aria-label={`Remove ${item.name}`}>Remove</button>
+
+                {/* per-item send -> uses selectedRecipient */}
+                <button
+                  className="btn btn-primary"
+                  onClick={() => sendItemToRecipient(item)}
+                  aria-label={`Send ${item.name} to selected recipient`}
+                >
+                  Send
+                </button>
               </div>
             </div>
           );
