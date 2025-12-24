@@ -1,130 +1,92 @@
-import { db } from "../firebase";
-import {
-  collection,
-  addDoc,
-  query,
-  where,
-  getDocs,
-  doc,
-  updateDoc,
-  serverTimestamp,
-  getDoc,
-} from "firebase/firestore";
+// src/api-client/firebaseSharingApi.js
+// Full-file replacement
+//
+// Exports:
+//  - searchUsers(q, limitCount)   // re-exported from firebaseApi.js
+//  - sendItemMessage({ fromUid, toUid, item, note })
+//
+// Implementation notes:
+//  - Uses Firestore to write a 'sharedMessages' record for sending items between users.
+//  - This is client-side only; ensure your Firestore rules allow authenticated users to write to this collection,
+//    or adapt to a per-user subcollection if you prefer (e.g. users/{toUid}/inbox).
+//
+// Usage example:
+//  import { searchUsers, sendItemMessage } from '../api-client/firebaseSharingApi';
+//  const results = await searchUsers('nicalenorth');
+//  await sendItemMessage({ fromUid: currentUid, toUid: recipientUid, item });
+
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db, searchUsers as searchUsersFromApi } from "./firebaseApi";
 
 /**
- * findUserByEmail(email)
- * - exact email lookup (fast)
+ * Re-export the searchUsers helper from firebaseApi for convenience.
+ * This ensures other components can import from *this* module and avoid circular import confusion.
  */
-export async function findUserByEmail(email) {
-  if (!email) return null;
-  const q = query(collection(db, "users"), where("email", "==", email));
-  const snap = await getDocs(q);
-  if (snap.empty) return null;
-  const d = snap.docs[0].data();
-  return { uid: d.uid, displayName: d.displayName, email: d.email };
+export async function searchUsers(q, limitCount = 10) {
+  return searchUsersFromApi(q, limitCount);
 }
 
 /**
- * searchUsers(q)
- * - flexible search: if q looks like an email we try equality first.
- * - fallback: fetch a page of users and filter client-side by displayName/email includes q.
- * - returns: [{ uid, displayName, email }]
+ * sendItemMessage
+ * - fromUid: string (sender uid)
+ * - toUid: string (recipient uid)
+ * - item: object (an item object, minimally should include id and name)
+ * - note: optional string message
+ *
+ * Writes a document into 'sharedMessages' with sender, recipient, item payload and timestamp.
+ * Returns the created document id on success.
  */
-export async function searchUsers(q) {
-  const raw = (q || "").trim();
-  if (!raw) return [];
-  // If it looks like an email, try an exact lookup first
-  if (raw.includes("@")) {
-    const exact = await findUserByEmail(raw);
-    return exact ? [exact] : [];
+export async function sendItemMessage({ fromUid, toUid, item, note = null }) {
+  if (!fromUid || !toUid || !item) {
+    throw new Error("sendItemMessage requires fromUid, toUid, and item");
   }
 
-  // Otherwise, try a prefix query if you have indexed fields (Firestore doesn't do contains).
-  // Safe fallback: fetch first N users and filter client-side.
   try {
-    const usersRef = collection(db, "users");
-    const snap = await getDocs(usersRef); // small/medium apps OK; pagination could be added
-    const ql = raw.toLowerCase();
-    const hits = snap.docs
-      .map((d) => d.data())
-      .filter((u) => {
-        const name = (u.displayName || "").toLowerCase();
-        const email = (u.email || "").toLowerCase();
-        return name.includes(ql) || email.includes(ql);
-      })
-      .slice(0, 30) // safety cap
-      .map((u) => ({ uid: u.uid, displayName: u.displayName, email: u.email }));
-    return hits;
-  } catch (e) {
-    console.error("searchUsers error", e);
-    return [];
+    const payload = {
+      fromUid,
+      toUid,
+      // normalize item snapshot (avoid keeping large objects)
+      item: {
+        id: item.id || item.itemId || null,
+        name: item.name || item.title || "",
+        originFromUid: item.originFromUid || null,
+        // keep the raw item only if small; prefer to store references otherwise
+        raw: item && Object.keys(item).length <= 12 ? item : undefined,
+      },
+      note: note || null,
+      createdAt: serverTimestamp(),
+      // optional client-side hint for delivery status
+      status: "sent",
+    };
+
+    const colRef = collection(db, "sharedMessages");
+    const docRef = await addDoc(colRef, payload);
+
+    console.debug("sendItemMessage: created", docRef.id, "payload:", payload);
+
+    return docRef.id;
+  } catch (err) {
+    console.error("sendItemMessage error", err);
+    throw err;
   }
 }
 
 /**
- * Messaging helpers
+ * Convenience: sendMultipleItems
+ * - sends multiple items sequentially (keeps behavior deterministic)
  */
-
-export async function sendItemMessage({ fromUid, toUid, item }) {
-  if (!fromUid || !toUid || !item)
-    throw new Error("missing args to sendItemMessage");
-  const r = await addDoc(collection(db, "messages"), {
-    from: fromUid,
-    to: toUid,
-    type: "item-share",
-    payload: {
-      name: item.name,
-      imageUrl: item.imageUrl || null,
-      websiteUrl: item.websiteUrl || null,
-      originalItemId: item.id || null,
-    },
-    status: "pending",
-    createdAt: serverTimestamp(),
-  });
-  return r.id;
+export async function sendMultipleItems({ fromUid, toUid, items = [] }) {
+  if (!Array.isArray(items) || items.length === 0) return [];
+  const created = [];
+  for (const it of items) {
+    const id = await sendItemMessage({ fromUid, toUid, item: it });
+    created.push(id);
+  }
+  return created;
 }
 
-export async function fetchPendingMessagesForUser(uid) {
-  if (!uid) return [];
-  const q = query(
-    collection(db, "messages"),
-    where("to", "==", uid),
-    where("status", "==", "pending")
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-}
-
-export async function acceptItemMessage({ messageId, recipientUid }) {
-  const mRef = doc(db, "messages", messageId);
-  const mSnap = await getDoc(mRef);
-  if (!mSnap.exists()) throw new Error("Message not found");
-  const m = mSnap.data();
-  if (m.to !== recipientUid) throw new Error("not authorized");
-
-  // clone into grocery-items
-  await addDoc(collection(db, "grocery-items"), {
-    name: m.payload.name,
-    imageUrl: m.payload.imageUrl || "",
-    websiteUrl: m.payload.websiteUrl || "",
-    userId: recipientUid,
-    createdAt: serverTimestamp(),
-    completed: false,
-    originMessageId: messageId,
-    originFromUid: m.from,
-  });
-
-  await updateDoc(mRef, { status: "accepted", acceptedAt: serverTimestamp() });
-  return true;
-}
-
-export async function rejectItemMessage({ messageId, recipientUid }) {
-  const mRef = doc(db, "messages", messageId);
-  const mSnap = await getDoc(mRef);
-  if (!mSnap.exists()) throw new Error("Message not found");
-  const m = mSnap.data();
-  if (m.to !== recipientUid) throw new Error("not authorized");
-
-  await updateDoc(mRef, { status: "rejected", rejectedAt: serverTimestamp() });
-  return true;
-}
+export default {
+  searchUsers,
+  sendItemMessage,
+  sendMultipleItems,
+};
